@@ -8,6 +8,7 @@
 	}
 </style>
 <script src="js/jquery-1.12.3.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 </head>
 <script>
 function MostrarDIV () 
@@ -60,6 +61,36 @@ function MostrarDIV ()
 						}
 		}
 
+</script>
+<script type="text/javascript">
+            $(document).ready(function(){
+               
+            });
+            function sendPushNotification(id){
+				        var id_proceso = $('#id_proceso').val();
+				        var identificacion = $('#IDENTIFICACION').val();
+                var gcm_regid = $('#gcm_regid').val();
+                var id_persona =$('#ID_PERSONA').val();
+                var fecha =$('#Fecha').val();
+                var descripcion =$('#descripcion').val();
+                var data = $('form#'+id).serialize();
+                $('form#'+id).unbind('submit');                
+                $.ajax({
+                    url: "send_push_notification_message.php",
+                    type: 'GET',
+                    data: data, id_proceso, identificacion, gcm_regid, id_persona, fecha, descripcion,
+                    beforeSend: function() {
+                        
+                    },
+                    success: function(data, textStatus, xhr) {
+                          $('.push_message').val("");
+                    },
+                    error: function(xhr, textStatus, errorThrown) {
+                        
+                    }
+                });
+                return false;
+            }
 </script>
 <!-- page content -->
       <div class="right_col" role="main">
@@ -441,10 +472,21 @@ mysql_close();
 							case 2:
 							//RECIBIMOS PARAMETROS
 							$id_proceso = $_GET['id_proceso'];
+              
+              //SE REALIZA CONEXION PARA CONSULTAR LOS DATOS DE LA PERSONA
+
+              $conexion3 = conexion();
+              $sql_consultar3="SELECT persona.ID_PERSONA, persona.IDENTIFICACION, persona.gcm_regid FROM proceso INNER JOIN persona ON persona.ID_PERSONA = proceso.ID_PERSONA WHERE proceso.ID_PROCESO ='".$id_proceso."'";
+              $resultado_consulta3 = mysql_query ($sql_consultar3,$conexion3) or die (mysql_error());	
+              $fila3 = mysql_fetch_array($resultado_consulta3);
+              $ID_PERSONA = $fila3['ID_PERSONA'];
+              $IDENTIFICACION = $fila3['IDENTIFICACION'];
+              $gcm_regid = $fila3['gcm_regid'];
+    
+              mysql_close();
 			
 							?>
-                            
-                            <div class="">
+            <div class="">
 
           
             <div class="title_right">
@@ -473,21 +515,26 @@ mysql_close();
                 </div>
 
                 <div class="x_content hidden1" id="Ingreso_Historial">
-				<form class="form-horizontal form-label-left" method="post">
+				
+				<form class="form-horizontal form-label-left" method="post" onSubmit="return sendPushNotification('<?php echo $ID_PERSONA; ?>)">
+                    
+                     <input id="IDENTIFICACION" name="IDENTIFICACION" type="text" value="<?php echo $IDENTIFICACION; ?>">
+                     <input id="gcm_regid" name="gcm_regid" type="text" value="<?php echo $gcm_regid; ?>">
+                     <input id="id_proceso" name="id_proceso" type="text" value="<?php echo $id_proceso;?>">
+                     <input id="ID_PERSONA" name="ID_PERSONA" type="text" value="<?php echo $ID_PERSONA;?>">
 
                     <div class="item form-group">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name">Descripción <span class="required">*</span>
                       </label>
                       <div class="col-md-6 col-sm-6 col-xs-12">
-                        <textarea class="form-control col-md-7 col-xs-12" name="Descripcion" required="required"></textarea>
+                        <textarea class="form-control col-md-7 col-xs-12" name="Descripcion" id="Descripcion" required="required"></textarea>
 	              		</div>
                     </div>
                     <div class="item form-group">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12" for="email">Fecha <span class="required">*</span>
                       </label>
                       <div class="col-md-6 col-sm-6 col-xs-12">
-                        
-                       <input id="name" class="form-control col-md-7 col-xs-12" name="Fecha" required="required" type="date" >                          
+                       <input id="name" class="form-control col-md-7 col-xs-12" name="Fecha" id="Fecha" required="required" type="date" >                          
                       </div>
                     </div>
                     
@@ -495,8 +542,9 @@ mysql_close();
                     <div class="ln_solid"></div>
                     <div class="form-group">
                       <div class="col-md-6 col-md-offset-3">
-                      <input id="name" name="id_proceso" type="hidden" value="<?php echo $id_proceso;?>">
-                        <button id="send" type="submit" class="btn btn-success" formaction="Procesar.php?opcion=32">Enviar Notificación</button>
+                      
+                        <button id="send" type="submit" class="btn btn-success" onClick="" >Enviar Notificación</button>
+
                       </div>
                     </div>
                   </form>
